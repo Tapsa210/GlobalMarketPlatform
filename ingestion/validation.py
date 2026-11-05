@@ -1,5 +1,6 @@
 ﻿import math
 from datetime import date
+from decimal import Decimal
 
 
 class DataValidationError(ValueError):
@@ -30,16 +31,28 @@ def validate_stock_record(record: dict) -> bool:
     if not isinstance(symbol, str) or not symbol.strip():
         raise DataValidationError("Symbol must be a non-empty string.")
 
-    if not isinstance(record["date"], str):
-        raise DataValidationError("Date must be a string.")
+    record_date = record["date"]
 
-    try:
-        parsed_date = date.fromisoformat(record["date"])
-    except ValueError:
-        raise DataValidationError("Date must use YYYY-MM-DD format.")
+    if isinstance(record_date, date):
+        parsed_date = record_date
 
-    if parsed_date.isoformat() != record["date"]:
-        raise DataValidationError("Date must use YYYY-MM-DD format.")
+    elif isinstance(record_date, str):
+        try:
+            parsed_date = date.fromisoformat(record_date)
+        except ValueError:
+            raise DataValidationError(
+                "Date must use YYYY-MM-DD format."
+            )
+
+        if parsed_date.isoformat() != record_date:
+            raise DataValidationError(
+                "Date must use YYYY-MM-DD format."
+            )
+
+    else:
+        raise DataValidationError(
+            "Date must be a date object or YYYY-MM-DD string."
+        )
 
     # --- الجزء الجديد الذي تسأل عنه ---
     prices = {
@@ -48,7 +61,9 @@ def validate_stock_record(record: dict) -> bool:
     }
 
     for price_field, value in prices.items():
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        if isinstance(value, bool) or not isinstance(
+            value, (int, float, Decimal)
+        ):
             raise DataValidationError(
                 f"{price_field} must be a numeric value."
             )
@@ -69,10 +84,15 @@ def validate_stock_record(record: dict) -> bool:
         )
 
     volume = record["volume"]
-    if isinstance(volume, bool) or not isinstance(volume, int):
-        raise DataValidationError("Volume must be an integer.")
-
+    if isinstance(volume, bool) or not isinstance(volume, (int, float, Decimal)):
+        raise DataValidationError("Volume must be a numeric value.")
+    if isinstance(volume, float) and not math.isfinite(volume):
+        raise DataValidationError("Volume must be a finite number.")
+    if isinstance(volume, Decimal) and not volume.is_finite():
+        raise DataValidationError("Volume must be a finite number.")
     if volume < 0:
         raise DataValidationError("Volume cannot be negative.")
+    if volume % 1 != 0:
+        raise DataValidationError("Volume must be a whole number.")
 
     return True

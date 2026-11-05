@@ -14,7 +14,8 @@ def test_load_settings_with_valid_api_key(monkeypatch):
     assert settings.alpha_vantage_api_key == "test_key_123"
 
 
-def test_load_settings_when_api_key_is_missing(monkeypatch):
+def test_load_settings_when_api_key_is_missing(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("ALPHA_VANTAGE_API_KEY", raising=False)
 
     with pytest.raises(ConfigurationError):

@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS raw_api_responses (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    symbol VARCHAR(20) NOT NULL,
+
+    source VARCHAR(50) NOT NULL,
+
+    response_data JSONB NOT NULL,
+
+    ingested_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
