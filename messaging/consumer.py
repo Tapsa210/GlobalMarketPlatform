@@ -1,0 +1,92 @@
+
+import json
+import logging
+
+from kafka import KafkaConsumer
+from database.stock_repository import save_stock_record
+from kafka.serializer import Deserializer
+
+logger = logging.getLogger(__name__)
+
+class StockRecordDeserializer(Deserializer):
+    def deserialize(self, topic: str, headers, data) -> dict:
+        if isinstance(data, bytes):
+            message_bytes = data
+        else:
+            message_bytes = bytes(data)
+
+        return json.loads(message_bytes.decode("utf-8"))
+
+class StockConsumer:
+
+    def __init__(
+        self,
+        bootstrap_servers: str = "localhost:9092",
+        topic: str = "stock-prices",
+        group_id: str = "stock-consumer-group",
+    ):
+        self.consumer = KafkaConsumer(
+            topic,
+            bootstrap_servers=bootstrap_servers,
+            group_id=group_id,
+            auto_offset_reset="earliest",
+            enable_auto_commit=False,
+            value_deserializer=StockRecordDeserializer(),
+        )
+
+        logger.info(
+            "Kafka consumer initialized. Topic: %s",
+            topic,
+        )
+
+    def consume_messages(self):
+        """
+        Continuously consume stock records from Kafka.
+        """
+
+        try:
+            for message in self.consumer:
+
+                record = message.value
+
+                logger.info(
+                    "Received stock record: symbol=%s date=%s",
+                    record.get("symbol"),
+                    record.get("date"),
+                )
+
+                print(record)
+
+                save_stock_record(record)
+
+                logger.info(
+                    "Stock record saved to PostgreSQL: symbol=%s date=%s",
+                    record.get("symbol"),
+                    record.get("date"),
+                )
+
+                self.consumer.commit()
+
+                logger.info(
+                    "Kafka offset committed: topic=%s partition=%s offset=%s",
+                    message.topic,
+                    message.partition,
+                    message.offset,
+                )
+
+        except KeyboardInterrupt:
+            logger.info("Consumer stopped by user.")
+
+        finally:
+            self.consumer.close()
+            logger.info("Kafka consumer closed.")
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    )
+
+    consumer = StockConsumer()
+    consumer.consume_messages()
