@@ -3,10 +3,13 @@ import json
 import logging
 
 from kafka import KafkaConsumer
-from database.stock_repository import save_stock_record
 from kafka.serializer import Deserializer
 
+from database.stock_repository import save_stock_record
+
+
 logger = logging.getLogger(__name__)
+
 
 class StockRecordDeserializer(Deserializer):
     def deserialize(self, topic: str, headers, data) -> dict:
@@ -17,8 +20,8 @@ class StockRecordDeserializer(Deserializer):
 
         return json.loads(message_bytes.decode("utf-8"))
 
-class StockConsumer:
 
+class StockConsumer:
     def __init__(
         self,
         bootstrap_servers: str = "localhost:9092",
@@ -46,24 +49,32 @@ class StockConsumer:
 
         try:
             for message in self.consumer:
-
                 record = message.value
 
                 logger.info(
-                    "Received stock record: symbol=%s date=%s",
+                    "Received Kafka message: topic=%s partition=%s offset=%s "
+                    "symbol=%s date=%s",
+                    message.topic,
+                    message.partition,
+                    message.offset,
                     record.get("symbol"),
                     record.get("date"),
                 )
 
-                print(record)
+                is_inserted = save_stock_record(record)
 
-                save_stock_record(record)
-
-                logger.info(
-                    "Stock record saved to PostgreSQL: symbol=%s date=%s",
-                    record.get("symbol"),
-                    record.get("date"),
-                )
+                if is_inserted:
+                    logger.info(
+                        "New stock record inserted: symbol=%s date=%s",
+                        record.get("symbol"),
+                        record.get("date"),
+                    )
+                else:
+                    logger.info(
+                        "Duplicate stock record ignored: symbol=%s date=%s",
+                        record.get("symbol"),
+                        record.get("date"),
+                    )
 
                 self.consumer.commit()
 

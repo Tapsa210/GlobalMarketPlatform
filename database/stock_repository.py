@@ -5,9 +5,13 @@ from decimal import Decimal
 from database.connection import get_connection
 
 
-def save_stock_record(record: dict) -> None:
+def save_stock_record(record: dict) -> bool:
     """
     Save one stock record into the Bronze stock prices table.
+
+    Returns:
+        True if a new record was inserted.
+        False if the record already exists.
     """
 
     query = """
@@ -30,7 +34,8 @@ def save_stock_record(record: dict) -> None:
             %(volume)s
         )
         ON CONFLICT (symbol, price_date)
-        DO NOTHING;
+        DO NOTHING
+        RETURNING id;
     """
 
     params = {
@@ -46,3 +51,6 @@ def save_stock_record(record: dict) -> None:
     with get_connection() as connection:
         with connection.cursor() as cursor:
             cursor.execute(query, params)
+            result = cursor.fetchone()
+
+            return result is not None

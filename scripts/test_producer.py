@@ -14,12 +14,12 @@ logging.basicConfig(
 
 sample_record = {
     "symbol": "AAPL",
-    "date": date(2026, 11, 7),
-    "open": Decimal("270.50"),
-    "high": Decimal("275.00"),
-    "low": Decimal("268.00"),
-    "close": Decimal("273.80"),
-    "volume": 45000000,
+    "date": date(2026, 11, 8),
+    "open": Decimal("275.50"),
+    "high": Decimal("280.00"),
+    "low": Decimal("273.00"),
+    "close": Decimal("278.80"),
+    "volume": 46000000,
 }
 
 
