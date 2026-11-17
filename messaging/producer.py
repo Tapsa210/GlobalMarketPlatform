@@ -6,6 +6,8 @@ from kafka import KafkaProducer
 from kafka.errors import KafkaError
 from kafka.serializer import Serializer
 
+from ingestion.config import load_settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -34,9 +36,13 @@ class StockProducer:
 
     def __init__(
         self,
-        bootstrap_servers: str = "localhost:9092",
+        bootstrap_servers: str | None = None,
         topic: str = "stock-prices",
     ):
+        if bootstrap_servers is None:
+            settings = load_settings()
+            bootstrap_servers = settings.kafka_bootstrap_servers
+
         self.topic = topic
 
         self.producer = KafkaProducer(

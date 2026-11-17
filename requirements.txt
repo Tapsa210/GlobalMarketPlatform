@@ -6,3 +6,4 @@ psycopg[binary]==3.3.8
 pydantic==2.14.2
 pydantic-settings==2.16.2
 kafka-python==3.0.13
+pyspark==3.5.6

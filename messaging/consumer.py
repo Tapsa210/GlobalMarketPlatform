@@ -6,7 +6,7 @@ from kafka import KafkaConsumer
 from kafka.serializer import Deserializer
 
 from database.stock_repository import save_stock_record
-
+from ingestion.config import load_settings
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,14 @@ class StockRecordDeserializer(Deserializer):
 class StockConsumer:
     def __init__(
         self,
-        bootstrap_servers: str = "localhost:9092",
+        bootstrap_servers: str | None = None,
         topic: str = "stock-prices",
         group_id: str = "stock-consumer-group",
     ):
+        if bootstrap_servers is None:
+            settings = load_settings()
+            bootstrap_servers = settings.kafka_bootstrap_servers
+
         self.consumer = KafkaConsumer(
             topic,
             bootstrap_servers=bootstrap_servers,

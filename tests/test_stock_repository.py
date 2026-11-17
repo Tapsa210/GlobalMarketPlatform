@@ -2,8 +2,8 @@
 from datetime import date
 from decimal import Decimal
 
-from database.stock_repository import save_stock_record
 from database.connection import get_connection
+from database.stock_repository import save_stock_record
 
 
 def test_save_stock_record():
@@ -19,19 +19,18 @@ def test_save_stock_record():
 
     save_stock_record(record)
 
-    with get_connection() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
+    with get_connection() as connection, connection.cursor() as cursor:
+        cursor.execute(
+            """
                 SELECT symbol, price_date, open_price,
                        high_price, low_price, close_price, volume
                 FROM bronze_stock_prices
                 WHERE symbol = %s AND price_date = %s;
                 """,
-                ("AAPL", date(2026, 11, 7)),
-            )
+            ("AAPL", date(2026, 11, 7)),
+        )
 
-            result = cursor.fetchone()
+        result = cursor.fetchone()
 
     assert result is not None
     assert result[0] == "AAPL"
@@ -54,17 +53,16 @@ def test_duplicate_stock_record_is_not_inserted():
     save_stock_record(record)
     save_stock_record(record)
 
-    with get_connection() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
+    with get_connection() as connection, connection.cursor() as cursor:
+        cursor.execute(
+            """
                 SELECT COUNT(*)
                 FROM bronze_stock_prices
                 WHERE symbol = %s AND price_date = %s;
                 """,
-                ("MSFT", date(2026, 11, 7)),
-            )
+            ("MSFT", date(2026, 11, 7)),
+        )
 
-            count = cursor.fetchone()[0]
+        count = cursor.fetchone()[0]
 
     assert count == 1

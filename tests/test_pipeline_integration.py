@@ -3,7 +3,7 @@ from ingestion.pipeline import ingest_stock_data
 
 
 def test_ingestion_pipeline_integration(monkeypatch):
-    from ingestion import api_client
+    from ingestion import api_client, pipeline
 
     sample_response = {
         "Meta Data": {
@@ -35,6 +35,15 @@ def test_ingestion_pipeline_integration(monkeypatch):
         "get",
         fake_get
     )
+
+    class FakeProducer:
+        def send_stock_record(self, record):
+            pass
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(pipeline, "StockProducer", FakeProducer)
 
     record_id = ingest_stock_data("AAPL")
 

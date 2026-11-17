@@ -48,9 +48,8 @@ def save_stock_record(record: dict) -> bool:
         "volume": record["volume"],
     }
 
-    with get_connection() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(query, params)
-            result = cursor.fetchone()
+    with get_connection() as connection, connection.cursor() as cursor:
+        cursor.execute(query, params)
+        result = cursor.fetchone()
 
-            return result is not None
+        return result is not None
